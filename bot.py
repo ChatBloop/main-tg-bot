@@ -13,8 +13,8 @@ from telegram.ext import (
 )
 
 # ==================== CONFIGURATION ====================
-BOT_TOKEN = os.getenv("BOT_TOKEN")      # Read from environment variable
-ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID", "0"))  # Read from env, convert to int
+BOT_TOKEN = os.getenv("8586521300:AAE3dpE5IBRPvA0vFmQJRzsZaEYE48qPPFk")      # Read from environment variable
+ADMIN_CHAT_ID = int(os.getenv("632522025", "0"))  # Read from env, convert to int
 # =======================================================
 
 # Enable logging
