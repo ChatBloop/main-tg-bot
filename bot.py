@@ -10,7 +10,6 @@ from telegram.ext import (
 )
 
 # ==================== CONFIGURATION ====================
-import os
 BOT_TOKEN = os.getenv("")      # Replace with your bot token from @BotFather
 ADMIN_CHAT_ID =                  # Replace with your Telegram user ID (get from @userinfobot)
 # =======================================================
