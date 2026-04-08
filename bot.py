@@ -13,8 +13,9 @@ from telegram.ext import (
 )
 
 # ==================== CONFIGURATION ====================
-BOT_TOKEN = os.getenv("8586521300:AAE3dpE5IBRPvA0vFmQJRzsZaEYE48qPPFk")      # Read from environment variable
-ADMIN_CHAT_ID = int(os.getenv("632522025", "0"))  # Read from env, convert to int
+# Read from environment variables (DO NOT hardcode)
+BOT_TOKEN = os.getenv("8586521300:AAE3dpE5IBRPvA0vFmQJRzsZaEYE48qPPFk")
+ADMIN_CHAT_ID = int(os.getenv("632522025", "0"))
 # =======================================================
 
 # Enable logging
@@ -24,7 +25,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ---------- Health check server for Fly.io ----------
+# ---------- Health check server for Fly.io / Render ----------
 flask_app = Flask('')
 
 @flask_app.route('/')
@@ -141,7 +142,6 @@ async def ask_qiziqish(update: Update, context: ContextTypes.DEFAULT_TYPE) -> in
 
 async def ask_rasm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.effective_user.id
-    # Get the largest photo (best quality)
     photo = update.message.photo[-1]
     user_data[user_id]['rasm_file_id'] = photo.file_id
     await update.message.reply_text("Reklama ma’lumotini qayerdan olgansiz? (Telegram, Instagram, do‘stlar va h.k.)")
@@ -152,7 +152,6 @@ async def ask_reklama(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     user_data[user_id]['reklama_manbai'] = update.message.text
     data = user_data[user_id]
 
-    # Prepare the summary for admin
     admin_text = (
         f"📝 **Yangi anketa!**\n"
         f"👤 Ism familiya: {data['ism_familiya']}\n"
@@ -168,24 +167,20 @@ async def ask_reklama(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
         f"📢 Reklama manbai: {data['reklama_manbai']}\n"
     )
 
-    # Send to admin
     try:
         await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_text, parse_mode="Markdown")
         await context.bot.send_photo(chat_id=ADMIN_CHAT_ID, photo=data['rasm_file_id'])
         logger.info(f"Anketa from user {user_id} successfully sent to admin.")
     except Exception as e:
         logger.error(f"Failed to send to admin: {e}")
-        # Optional: inform user about technical issue
         await update.message.reply_text("Texnik xatolik yuz berdi. Iltimos, keyinroq urinib ko‘ring.")
 
-    # Confirm to user
     await update.message.reply_text(
         "Hurmatli nomzod, arizangiz qabul qilindi ✅\n"
         "Ko‘rib chiqilgandan so‘ng siz bilan bog‘lanamiz 📞\n\n"
         "E’tiboringiz uchun rahmat!"
     )
 
-    # Clean up stored data for this user (optional)
     if user_id in user_data:
         del user_data[user_id]
 
@@ -200,13 +195,9 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 # ---------- Main ----------
 def main() -> None:
-    # Start the health check server (so Fly.io keeps us alive)
     start_health_server()
-
-    # Create the Application
     application = Application.builder().token(BOT_TOKEN).build()
 
-    # Conversation handler
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
@@ -227,13 +218,10 @@ def main() -> None:
     )
 
     application.add_handler(conv_handler)
-
-    # Start the bot
     print("Bot is running...")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
-    # Validate required environment variables
     if not BOT_TOKEN:
         logger.error("BOT_TOKEN environment variable not set!")
         exit(1)
