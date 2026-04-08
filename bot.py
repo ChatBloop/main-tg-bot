@@ -13,20 +13,17 @@ from telegram.ext import (
 )
 
 # ==================== HARDCODED CONFIGURATION ====================
-# ⚠️ ESINGIZDA BO‘LSIN: Token ochiq kodda turgani uchun XAVFLI!
-# Darhol BotFather orqali eski tokenni revoke qiling va yangisini qo‘ying!
 BOT_TOKEN = "8586521300:AAE3dpE5IBRPvA0vFmQJRzsZaEYE48qPPFk"
 ADMIN_CHAT_ID = "632522025"
 # ================================================================
 
-# Enable logging
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
-# ---------- Health check server for Railway ----------
+# ---------- Health check server ----------
 flask_app = Flask(__name__)
 
 @flask_app.route('/')
@@ -72,6 +69,12 @@ async def ask_tugilgan_yil(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     context.user_data['tugilgan_yil'] = text
     await update.message.reply_text("Ma’lumotingiz (masalan: Oliy, O‘rta maxsus):")
     return ASK_MA_LUMOT
+
+
+async def ask_ma_lumot(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:   # ← Bu joy edi muammo!
+    context.user_data['ma_lumot'] = update.message.text.strip()
+    await update.message.reply_text("Yashash manzilingiz (viloyat, tuman, ko‘cha):")
+    return ASK_MANZIL
 
 
 async def ask_manzil(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -205,12 +208,9 @@ def main() -> None:
     )
 
     application.add_handler(conv_handler)
-    print("Bot is running...")
+    print("✅ Bot is running...")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == "__main__":
-    if BOT_TOKEN == "YOUR_NEW_TOKEN_HERE" or not BOT_TOKEN:
-        logger.error("BOT_TOKEN ni kodga to‘g‘ri qo‘ying!")
-        exit(1)
     main()
