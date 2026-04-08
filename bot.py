@@ -13,9 +13,9 @@ from telegram.ext import (
 )
 
 # ==================== CONFIGURATION ====================
-# Read from environment variables (DO NOT hardcode)
-BOT_TOKEN = os.getenv("8586521300:AAE3dpE5IBRPvA0vFmQJRzsZaEYE48qPPFk")
-ADMIN_CHAT_ID = int(os.getenv("632522025", "0"))
+# Read from environment variables (NEVER hardcode)
+BOT_TOKEN = os.environ.get("8586521300:AAE3dpE5IBRPvA0vFmQJRzsZaEYE48qPPFk")
+ADMIN_CHAT_ID = os.environ.get("632522025")
 # =======================================================
 
 # Enable logging
@@ -25,7 +25,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ---------- Health check server for Fly.io / Render ----------
+# ---------- Health check server for Railway ----------
 flask_app = Flask('')
 
 @flask_app.route('/')
@@ -168,9 +168,15 @@ async def ask_reklama(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     )
 
     try:
-        await context.bot.send_message(chat_id=ADMIN_CHAT_ID, text=admin_text, parse_mode="Markdown")
-        await context.bot.send_photo(chat_id=ADMIN_CHAT_ID, photo=data['rasm_file_id'])
-        logger.info(f"Anketa from user {user_id} successfully sent to admin.")
+        # Convert ADMIN_CHAT_ID to int for sending
+        admin_id = int(ADMIN_CHAT_ID) if ADMIN_CHAT_ID else None
+        if admin_id:
+            await context.bot.send_message(chat_id=admin_id, text=admin_text, parse_mode="Markdown")
+            await context.bot.send_photo(chat_id=admin_id, photo=data['rasm_file_id'])
+            logger.info(f"Anketa from user {user_id} successfully sent to admin.")
+        else:
+            logger.error("ADMIN_CHAT_ID is not set")
+            await update.message.reply_text("Admin ID not configured. Please contact support.")
     except Exception as e:
         logger.error(f"Failed to send to admin: {e}")
         await update.message.reply_text("Texnik xatolik yuz berdi. Iltimos, keyinroq urinib ko‘ring.")
@@ -195,9 +201,13 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 # ---------- Main ----------
 def main() -> None:
+    # Start health check server
     start_health_server()
+
+    # Create the Application
     application = Application.builder().token(BOT_TOKEN).build()
 
+    # Conversation handler
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
@@ -218,14 +228,25 @@ def main() -> None:
     )
 
     application.add_handler(conv_handler)
+
+    # Start the bot
     print("Bot is running...")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
+    # Validate environment variables
     if not BOT_TOKEN:
         logger.error("BOT_TOKEN environment variable not set!")
         exit(1)
-    if ADMIN_CHAT_ID == 0:
-        logger.error("ADMIN_CHAT_ID environment variable not set or invalid!")
+    if not ADMIN_CHAT_ID:
+        logger.error("ADMIN_CHAT_ID environment variable not set!")
         exit(1)
+    
+    # Convert ADMIN_CHAT_ID to int for validation (but keep original for later conversion)
+    try:
+        int(ADMIN_CHAT_ID)
+    except ValueError:
+        logger.error(f"ADMIN_CHAT_ID must be a number, got '{ADMIN_CHAT_ID}'")
+        exit(1)
+    
     main()
