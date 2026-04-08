@@ -10,8 +10,9 @@ from telegram.ext import (
 )
 
 # ==================== CONFIGURATION ====================
-BOT_TOKEN = "8586521300:AAE3dpE5IBRPvA0vFmQJRzsZaEYE48qPPFk"       # Replace with your bot token from @BotFather
-ADMIN_CHAT_ID =632522025           # Replace with your Telegram user ID (get from @userinfobot)
+import os
+BOT_TOKEN = os.getenv("")     # Replace with your bot token from @BotFather
+ADMIN_CHAT_ID =1234567         # Replace with your Telegram user ID (get from @userinfobot)
 # =======================================================
 
 # Enable logging
