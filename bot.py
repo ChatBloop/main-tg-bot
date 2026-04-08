@@ -12,11 +12,11 @@ from telegram.ext import (
     ContextTypes
 )
 
-# ==================== CONFIGURATION ====================
+# ==================== HARDCODED CONFIGURATION ====================
 # ⚠️ Replace with your NEW token after revoking the old one
 BOT_TOKEN = "8586521300:AAE3dpE5IBRPvA0vFmQJRzsZaEYE48qPPFk"
-ADMIN_CHAT_ID = "632522025"   # Your admin ID (keep as string)
-# =======================================================
+ADMIN_CHAT_ID = "632522025"          # Your admin ID (as string)
+# ================================================================
 
 # Enable logging
 logging.basicConfig(
@@ -42,7 +42,7 @@ def start_health_server():
     t.start()
 # ----------------------------------------------------
 
-# Conversation states (same as before)
+# Conversation states (12 questions)
 (
     ASK_ISMI,
     ASK_TUGILGAN_YIL,
@@ -60,7 +60,7 @@ def start_health_server():
 
 user_data = {}
 
-# ---------- Handlers (all your existing handlers) ----------
+# ---------- Handlers ----------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.effective_user.id
     user_data[user_id] = {}
@@ -97,6 +97,7 @@ async def ask_manzil(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def ask_telefon(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.effective_user.id
     user_data[user_id]['telefon'] = update.message.text
+
     reply_keyboard = [["Turmush qurgan", "Bo‘ydoq / Turmushga chiqmagan"],
                       ["Ajrashgan", "Beva"]]
     await update.message.reply_text(
@@ -221,8 +222,9 @@ def main() -> None:
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
-    if not BOT_TOKEN or BOT_TOKEN == "YOUR_NEW_BOT_TOKEN_HERE":
-        logger.error("BOT_TOKEN is not set correctly!")
+    # Simple validation (no environment variables needed)
+    if not BOT_TOKEN or BOT_TOKEN == "YOUR_NEW_TOKEN_HERE":
+        logger.error("BOT_TOKEN is not set correctly! Please edit the code.")
         exit(1)
     if not ADMIN_CHAT_ID:
         logger.error("ADMIN_CHAT_ID is not set!")
