@@ -13,9 +13,9 @@ from telegram.ext import (
 )
 
 # ==================== CONFIGURATION ====================
-# Read from environment variables (NEVER hardcode)
+# ⚠️ Replace with your NEW token after revoking the old one
 BOT_TOKEN = "8586521300:AAE3dpE5IBRPvA0vFmQJRzsZaEYE48qPPFk"
-ADMIN_CHAT_ID = "632522025"
+ADMIN_CHAT_ID = "632522025"   # Your admin ID (keep as string)
 # =======================================================
 
 # Enable logging
@@ -42,7 +42,7 @@ def start_health_server():
     t.start()
 # ----------------------------------------------------
 
-# Conversation states
+# Conversation states (same as before)
 (
     ASK_ISMI,
     ASK_TUGILGAN_YIL,
@@ -58,10 +58,9 @@ def start_health_server():
     ASK_REKLAMA
 ) = range(12)
 
-# Temporary user data storage
 user_data = {}
 
-# ---------- Handlers ----------
+# ---------- Handlers (all your existing handlers) ----------
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.effective_user.id
     user_data[user_id] = {}
@@ -98,7 +97,6 @@ async def ask_manzil(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def ask_telefon(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     user_id = update.effective_user.id
     user_data[user_id]['telefon'] = update.message.text
-
     reply_keyboard = [["Turmush qurgan", "Bo‘ydoq / Turmushga chiqmagan"],
                       ["Ajrashgan", "Beva"]]
     await update.message.reply_text(
@@ -168,15 +166,10 @@ async def ask_reklama(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     )
 
     try:
-        # Convert ADMIN_CHAT_ID to int for sending
-        admin_id = int(ADMIN_CHAT_ID) if ADMIN_CHAT_ID else None
-        if admin_id:
-            await context.bot.send_message(chat_id=admin_id, text=admin_text, parse_mode="Markdown")
-            await context.bot.send_photo(chat_id=admin_id, photo=data['rasm_file_id'])
-            logger.info(f"Anketa from user {user_id} successfully sent to admin.")
-        else:
-            logger.error("ADMIN_CHAT_ID is not set")
-            await update.message.reply_text("Admin ID not configured. Please contact support.")
+        admin_id = int(ADMIN_CHAT_ID)
+        await context.bot.send_message(chat_id=admin_id, text=admin_text, parse_mode="Markdown")
+        await context.bot.send_photo(chat_id=admin_id, photo=data['rasm_file_id'])
+        logger.info(f"Anketa from user {user_id} successfully sent to admin.")
     except Exception as e:
         logger.error(f"Failed to send to admin: {e}")
         await update.message.reply_text("Texnik xatolik yuz berdi. Iltimos, keyinroq urinib ko‘ring.")
@@ -201,13 +194,9 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 # ---------- Main ----------
 def main() -> None:
-    # Start health check server
     start_health_server()
-
-    # Create the Application
     application = Application.builder().token(BOT_TOKEN).build()
 
-    # Conversation handler
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
         states={
@@ -228,25 +217,14 @@ def main() -> None:
     )
 
     application.add_handler(conv_handler)
-
-    # Start the bot
     print("Bot is running...")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
-    # Validate environment variables
-    if not BOT_TOKEN:
-        logger.error("BOT_TOKEN environment variable not set!")
+    if not BOT_TOKEN or BOT_TOKEN == "YOUR_NEW_BOT_TOKEN_HERE":
+        logger.error("BOT_TOKEN is not set correctly!")
         exit(1)
     if not ADMIN_CHAT_ID:
-        logger.error("ADMIN_CHAT_ID environment variable not set!")
+        logger.error("ADMIN_CHAT_ID is not set!")
         exit(1)
-    
-    # Convert ADMIN_CHAT_ID to int for validation (but keep original for later conversion)
-    try:
-        int(ADMIN_CHAT_ID)
-    except ValueError:
-        logger.error(f"ADMIN_CHAT_ID must be a number, got '{ADMIN_CHAT_ID}'")
-        exit(1)
-    
     main()
