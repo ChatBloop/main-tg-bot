@@ -1,4 +1,7 @@
+import os
 import logging
+from threading import Thread
+from flask import Flask
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import (
     Application,
@@ -10,8 +13,8 @@ from telegram.ext import (
 )
 
 # ==================== CONFIGURATION ====================
-BOT_TOKEN = os.getenv("")      # Replace with your bot token from @BotFather
-ADMIN_CHAT_ID =                  # Replace with your Telegram user ID (get from @userinfobot)
+BOT_TOKEN = os.getenv("BOT_TOKEN")      # Read from environment variable
+ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID", "0"))  # Read from env, convert to int
 # =======================================================
 
 # Enable logging
@@ -20,6 +23,23 @@ logging.basicConfig(
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+# ---------- Health check server for Fly.io ----------
+flask_app = Flask('')
+
+@flask_app.route('/')
+def home():
+    return "Bot is running!"
+
+def run_health_server():
+    port = int(os.environ.get('PORT', 8080))
+    flask_app.run(host='0.0.0.0', port=port)
+
+def start_health_server():
+    t = Thread(target=run_health_server)
+    t.daemon = True
+    t.start()
+# ----------------------------------------------------
 
 # Conversation states
 (
@@ -180,6 +200,9 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 # ---------- Main ----------
 def main() -> None:
+    # Start the health check server (so Fly.io keeps us alive)
+    start_health_server()
+
     # Create the Application
     application = Application.builder().token(BOT_TOKEN).build()
 
@@ -210,4 +233,11 @@ def main() -> None:
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
+    # Validate required environment variables
+    if not BOT_TOKEN:
+        logger.error("BOT_TOKEN environment variable not set!")
+        exit(1)
+    if ADMIN_CHAT_ID == 0:
+        logger.error("ADMIN_CHAT_ID environment variable not set or invalid!")
+        exit(1)
     main()
