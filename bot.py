@@ -71,7 +71,7 @@ async def ask_tugilgan_yil(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     return ASK_MA_LUMOT
 
 
-async def ask_ma_lumot(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:   # ← Bu joy edi muammo!
+async def ask_ma_lumot(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data['ma_lumot'] = update.message.text.strip()
     await update.message.reply_text("Yashash manzilingiz (viloyat, tuman, ko‘cha):")
     return ASK_MANZIL
@@ -85,10 +85,20 @@ async def ask_manzil(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
 async def ask_telefon(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text.strip()
-    if not text.startswith("+998") or len(text) != 13 or not text[1:].isdigit():
-        await update.message.reply_text("❌ Telefon raqamni +998 xx xxx xx xx formatida yozing.")
+    
+    # Bo'shliq, chiziqcha, nuqta va boshqa belgilarni olib tashlaymiz
+    cleaned = ''.join(c for c in text if c.isdigit() or c == '+')
+    
+    if not cleaned.startswith("+998") or len(cleaned) != 13 or not cleaned[1:].isdigit():
+        await update.message.reply_text(
+            "❌ Telefon raqamni +998 xx xxx xx xx formatida yozing.\n"
+            "Bo‘shliq bilan yoki bo‘shliqsiz, chiziqcha bilan ham yozsa bo‘ladi.\n"
+            "Masalan: +998 90 123 45 67"
+        )
         return ASK_TELEFON
-    context.user_data['telefon'] = text
+    
+    # Toza formatda saqlaymiz
+    context.user_data['telefon'] = cleaned
     reply_keyboard = [["Turmush qurgan", "Bo‘ydoq / Turmushga chiqmagan"],
                       ["Ajrashgan", "Beva"]]
     await update.message.reply_text(
