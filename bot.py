@@ -12,10 +12,10 @@ from telegram.ext import (
     ContextTypes
 )
 
-# ==================== HARDCODED CONFIGURATION ====================
+# ==================== HARDCODED CONFIG ====================
 BOT_TOKEN = "8586521300:AAE3dpE5IBRPvA0vFmQJRzsZaEYE48qPPFk"
 ADMIN_CHAT_ID = "632522025"
-# ================================================================
+# =========================================================
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -23,7 +23,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ---------- Health check server ----------
+# Health check server
 flask_app = Flask(__name__)
 
 @flask_app.route('/')
@@ -38,12 +38,10 @@ def start_health_server():
     t = Thread(target=run_health_server, daemon=True)
     t.start()
 
-# Conversation states
-(
-    ASK_ISMI, ASK_TUGILGAN_YIL, ASK_MA_LUMOT, ASK_MANZIL,
-    ASK_TELEFON, ASK_OILAVIY, ASK_OLDIN_ISH, ASK_OYLIK_MAOSH,
-    ASK_MUDDAT, ASK_QIZIQISH, ASK_RASM, ASK_REKLAMA
-) = range(12)
+# States
+(ASK_ISMI, ASK_TUGILGAN_YIL, ASK_MA_LUMOT, ASK_MANZIL,
+ ASK_TELEFON, ASK_OILAVIY, ASK_OLDIN_ISH, ASK_OYLIK_MAOSH,
+ ASK_MUDDAT, ASK_QIZIQISH, ASK_RASM, ASK_REKLAMA) = range(12)
 
 # ==================== HANDLERS ====================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -54,12 +52,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     )
     return ASK_ISMI
 
-
 async def ask_ismi(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data['ism_familiya'] = update.message.text.strip()
     await update.message.reply_text("Tug‘ilgan yilingiz (masalan: 1990):")
     return ASK_TUGILGAN_YIL
-
 
 async def ask_tugilgan_yil(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text.strip()
@@ -70,34 +66,29 @@ async def ask_tugilgan_yil(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     await update.message.reply_text("Ma’lumotingiz (masalan: Oliy, O‘rta maxsus):")
     return ASK_MA_LUMOT
 
-
 async def ask_ma_lumot(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data['ma_lumot'] = update.message.text.strip()
     await update.message.reply_text("Yashash manzilingiz (viloyat, tuman, ko‘cha):")
     return ASK_MANZIL
-
 
 async def ask_manzil(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data['manzil'] = update.message.text.strip()
     await update.message.reply_text("Telefon raqamingiz (+998 xx xxx xx xx):")
     return ASK_TELEFON
 
-
 async def ask_telefon(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     text = update.message.text.strip()
-    
-    # Bo'shliq, chiziqcha, nuqta va boshqa belgilarni olib tashlaymiz
+    # Bo'shliq, chiziqcha, nuqta va boshqa belgilarni tozalaydi
     cleaned = ''.join(c for c in text if c.isdigit() or c == '+')
     
     if not cleaned.startswith("+998") or len(cleaned) != 13 or not cleaned[1:].isdigit():
         await update.message.reply_text(
             "❌ Telefon raqamni +998 xx xxx xx xx formatida yozing.\n"
-            "Bo‘shliq bilan yoki bo‘shliqsiz, chiziqcha bilan ham yozsa bo‘ladi.\n"
+            "Bo‘shliq bilan, chiziqcha bilan yoki bo‘shliqsiz yozsa ham bo‘ladi.\n"
             "Masalan: +998 90 123 45 67"
         )
         return ASK_TELEFON
     
-    # Toza formatda saqlaymiz
     context.user_data['telefon'] = cleaned
     reply_keyboard = [["Turmush qurgan", "Bo‘ydoq / Turmushga chiqmagan"],
                       ["Ajrashgan", "Beva"]]
@@ -107,7 +98,6 @@ async def ask_telefon(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     )
     return ASK_OILAVIY
 
-
 async def ask_oilaviy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data['oilaviy_holat'] = update.message.text
     await update.message.reply_text(
@@ -116,37 +106,31 @@ async def ask_oilaviy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     )
     return ASK_OLDIN_ISH
 
-
 async def ask_oldin_ish(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data['oldin_ish'] = update.message.text
     await update.message.reply_text("Qancha oylikka ishlamoqchisiz? (Masalan: 3 000 000 so‘m)")
     return ASK_OYLIK_MAOSH
-
 
 async def ask_oylik_maosh(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data['oylik_maosh'] = update.message.text
     await update.message.reply_text("Qancha muddat ishlamoqchisiz? (Masalan: 6 oy, 1 yil)")
     return ASK_MUDDAT
 
-
 async def ask_muddat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data['muddat'] = update.message.text
     await update.message.reply_text("Kitob o‘qishga, gul yasashga qiziqasizmi? (Ha/Yo‘q yoki qisqa javob)")
     return ASK_QIZIQISH
-
 
 async def ask_qiziqish(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data['qiziqish'] = update.message.text
     await update.message.reply_text("Iltimos, rasmingizni yuboring (selfi yoki surat):")
     return ASK_RASM
 
-
 async def ask_rasm(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     photo = update.message.photo[-1]
     context.user_data['rasm_file_id'] = photo.file_id
     await update.message.reply_text("Reklama ma’lumotini qayerdan olgansiz? (Telegram, Instagram, do‘stlar va h.k.)")
     return ASK_REKLAMA
-
 
 async def ask_reklama(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data['reklama_manbai'] = update.message.text
@@ -183,7 +167,6 @@ async def ask_reklama(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
     context.user_data.clear()
     return ConversationHandler.END
 
-
 async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     await update.message.reply_text(
         "Anketa bekor qilindi. Qayta boshlash uchun /start yuboring.",
@@ -192,8 +175,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     context.user_data.clear()
     return ConversationHandler.END
 
-
-# ---------- Main ----------
+# ---------- MAIN ----------
 def main() -> None:
     start_health_server()
     application = Application.builder().token(BOT_TOKEN).build()
@@ -220,7 +202,6 @@ def main() -> None:
     application.add_handler(conv_handler)
     print("✅ Bot is running...")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
-
 
 if __name__ == "__main__":
     main()
